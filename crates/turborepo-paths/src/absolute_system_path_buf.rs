@@ -11,7 +11,7 @@ use serde::Serialize;
 
 use crate::{AbsoluteSystemPath, AnchoredSystemPathBuf, IntoSystem, PathError, RelativeUnixPath};
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub struct AbsoluteSystemPathBuf(pub(crate) PathBuf);
 
 impl Borrow<AbsoluteSystemPath> for AbsoluteSystemPathBuf {
@@ -87,6 +87,11 @@ impl AbsoluteSystemPathBuf {
 
     pub fn ancestors(&self) -> impl Iterator<Item = &AbsoluteSystemPath> {
         self.as_absolute_path().ancestors()
+    }
+
+    #[cfg(test)]
+    pub unsafe fn new_unchecked(unchecked_path: impl Into<PathBuf>) -> Self {
+        AbsoluteSystemPathBuf(unchecked_path.into())
     }
 
     /// Anchors `path` at `self`.
@@ -167,10 +172,10 @@ impl AbsoluteSystemPathBuf {
         self.0.components()
     }
 
-    pub fn parent(&self) -> Option<Self> {
+    pub fn parent(&self) -> Option<&AbsoluteSystemPath> {
         self.0
             .parent()
-            .map(|p| AbsoluteSystemPathBuf(p.to_path_buf()))
+            .map(|p| unsafe { AbsoluteSystemPath::new_unchecked(p) })
     }
 
     pub fn starts_with<P: AsRef<Path>>(&self, base: P) -> bool {
@@ -240,6 +245,10 @@ impl AbsoluteSystemPathBuf {
         self.0.to_string_lossy()
     }
 
+    pub fn to_path_buf(&self) -> PathBuf {
+        self.0.clone()
+    }
+
     pub fn file_name(&self) -> Option<&OsStr> {
         self.0.file_name()
     }
@@ -252,8 +261,8 @@ impl AbsoluteSystemPathBuf {
         self.0.extension()
     }
 
-    pub fn open(&self) -> Result<fs::File, PathError> {
-        Ok(fs::File::open(&self.0)?)
+    pub fn open(&self) -> Result<fs::File, io::Error> {
+        self.as_absolute_path().open()
     }
 
     pub fn to_realpath(&self) -> Result<Self, PathError> {
