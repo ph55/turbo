@@ -106,7 +106,9 @@ pub fn globwalk(
         match match_type {
             // if it is a perfect match, and our walk_type allows it, then we should yield it
             MatchType::Match if walk_type.should_emit(is_directory) => {
-                return Some(Ok(AbsoluteSystemPathBuf::new(path).expect("absolute")));
+                return Some(Ok(
+                    AbsoluteSystemPathBuf::try_from(path.as_path()).expect("absolute")
+                ));
             }
             // we should yield potential matches if they are symlinks. we don't want to traverse
             // into them, but simply say 'hey this is a symlink that could match'
@@ -158,11 +160,12 @@ fn preprocess_paths_and_globs(
     exclude: &[String],
 ) -> Result<(PathBuf, Vec<String>, Vec<String>), WalkError> {
     let base_path_slash = base_path
-        .as_path()
+        .as_std_path()
         .to_slash()
         // Windows drive paths need to be escaped, and ':' is a valid token in unix paths
         .map(|s| s.replace(':', "\\:"))
         .ok_or(WalkError::InvalidPath)?;
+
     let (include_paths, lowest_segment) = include
         .iter()
         .map(|s| join_unix_like_paths(&base_path_slash, s))
