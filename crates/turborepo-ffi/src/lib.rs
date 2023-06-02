@@ -253,7 +253,7 @@ pub extern "C" fn get_package_file_hashes_from_git_index(buffer: Buffer) -> Buff
         Ok(hashes) => {
             let mut to_return = HashMap::new();
             for (filename, hash) in hashes {
-                let filename = match filename.as_str() {
+                let filename = match filename.to_str() {
                     Ok(s) => s.to_owned(),
                     Err(err) => {
                         let resp = proto::GetPackageFileHashesFromGitIndexResponse {

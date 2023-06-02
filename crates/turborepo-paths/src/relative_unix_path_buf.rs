@@ -145,13 +145,13 @@ mod tests {
     #[test]
     fn test_relative_unix_path_buf() {
         let path = RelativeUnixPathBuf::new("foo/bar").unwrap();
-        assert_eq!(path.as_str().unwrap(), "foo/bar");
+        assert_eq!(path.to_str().unwrap(), "foo/bar");
     }
 
     #[test]
     fn test_relative_unix_path_buf_with_extension() {
         let path = RelativeUnixPathBuf::new("foo/bar.txt").unwrap();
-        assert_eq!(path.as_str().unwrap(), "foo/bar.txt");
+        assert_eq!(path.to_str().unwrap(), "foo/bar.txt");
     }
 
     #[test]
@@ -159,7 +159,7 @@ mod tests {
         let head = RelativeUnixPathBuf::new("some/path").unwrap();
         let tail = RelativeUnixPathBuf::new("child/leaf").unwrap();
         let combined = head.join(&tail);
-        assert_eq!(combined.as_str().unwrap(), "some/path/child/leaf");
+        assert_eq!(combined.to_str().unwrap(), "some/path/child/leaf");
     }
 
     #[test]

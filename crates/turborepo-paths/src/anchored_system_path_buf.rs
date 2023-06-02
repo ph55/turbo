@@ -51,6 +51,12 @@ impl AnchoredSystemPathBuf {
         Ok(AnchoredSystemPathBuf(stripped_path))
     }
 
+    pub fn from_raw(raw: impl AsRef<Path>) -> Result<Self, PathError> {
+        let system_path = raw.as_ref();
+        let system_path = system_path.into_system()?;
+        Ok(Self(system_path))
+    }
+
     pub unsafe fn new_unchecked(path: impl Into<PathBuf>) -> Self {
         AnchoredSystemPathBuf(path.into())
     }
