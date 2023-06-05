@@ -197,7 +197,7 @@ impl AbsoluteSystemPath {
     }
 
     /// Opens file and sets the `FILE_FLAG_SEQUENTIAL_SCAN` flag on Windows to
-    /// help with performance. Also sets Unix file permissions.
+    /// help with performance
     pub fn open(&self) -> Result<File, io::Error> {
         let mut options = OpenOptions::new();
         options.read(true);

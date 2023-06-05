@@ -40,15 +40,7 @@ impl CacheReader {
     }
 
     pub fn open(path: &AbsoluteSystemPathBuf) -> Result<Self, CacheError> {
-        let mut options = OpenOptions::new();
-
-        #[cfg(windows)]
-        {
-            use crate::cache_archive::create::FILE_FLAG_SEQUENTIAL_SCAN;
-            options.custom_flags(FILE_FLAG_SEQUENTIAL_SCAN);
-        }
-
-        let file = options.read(true).open(path.as_path())?;
+        let file = path.open()?;
 
         let reader: Box<dyn Read> = if path.as_path().extension() == Some(OsStr::new("zst")) {
             Box::new(zstd::Decoder::new(file)?)
