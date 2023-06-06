@@ -44,7 +44,7 @@ impl<'a> TryFrom<&'a CommandBase> for ExecutionState<'a> {
             TurboJson::load(&base.repo_root, &root_package_json, run_args.single_package)?;
 
         let package_manager =
-            PackageManager::get_package_manager(&base.repo_root, &root_package_json)?;
+            PackageManager::get_package_manager(&base.repo_root, Some(&root_package_json))?;
         trace!("Found {} as package manager", package_manager);
 
         let repo_config = base.repo_config()?;
