@@ -29,6 +29,7 @@
     "@turbo/test-utils": "workspace:*",
     "@turbo/tsconfig": "workspace:*",
     "@turbo/types": "workspace:*",
+    "@turbo/workspaces": "workspace:*",
     "@types/async-retry": "^1.4.5",
     "@types/fs-extra": "^9.0.13",
     "@types/gradient-string": "^1.1.2",

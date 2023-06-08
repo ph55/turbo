@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import os from "os";
 import inquirer from "inquirer";
-import { execSync } from "child_process";
+import { getWorkspaceDetails } from "@turbo/workspaces";
 
 import getCurrentVersion from "./steps/getCurrentVersion";
 import getLatestVersion from "./steps/getLatestVersion";
@@ -12,6 +12,10 @@ import getTurboUpgradeCommand from "./steps/getTurboUpgradeCommand";
 import Runner from "../../runner/Runner";
 import type { MigrateCommandArgument, MigrateCommandOptions } from "./types";
 import looksLikeRepo from "../../utils/looksLikeRepo";
+import { TransformerResults } from "../../runner";
+import { shutdownDaemon } from "./steps/shutdownDaemon";
+import { exec } from "./utils";
+import { execSync } from "child_process";
 
 function endMigration({
   message,
@@ -95,12 +99,22 @@ export default async function migrate(
     });
   }
 
+  const project = await getWorkspaceDetails({ root });
+  if (!project) {
+    return endMigration({
+      success: false,
+      message: `Unable to read determine package manager details from ${chalk.dim(
+        root
+      )}`,
+    });
+  }
+
   // step 1
-  const fromVersion = getCurrentVersion(selectedDirectory, options);
+  const fromVersion = getCurrentVersion(project, options);
   if (!fromVersion) {
     return endMigration({
       success: false,
-      message: `Unable to infer the version of turbo being used by ${directory}`,
+      message: `Unable to infer the version of turbo being used by ${project.name}`,
     });
   }
 
@@ -157,17 +171,20 @@ export default async function migrate(
     })`,
     os.EOL
   );
-  const results = codemods.map((codemod, idx) => {
+
+  const results: Array<TransformerResults> = [];
+  for (let [idx, codemod] of codemods.entries()) {
     console.log(
-      `(${idx + 1}/${codemods.length}) ${chalk.bold(
-        `Running ${codemod.value}`
-      )}`
+      `(${idx + 1}/${codemods.length}) ${chalk.bold(`Running ${codemod.name}`)}`
     );
 
-    const result = codemod.transformer({ root: selectedDirectory, options });
+    const result = await codemod.transformer({
+      root: project.paths.root,
+      options,
+    });
     Runner.logResults(result);
-    return result;
-  });
+    results.push(result);
+  }
 
   const hasTransformError = results.some(
     (result) =>
@@ -183,8 +200,15 @@ export default async function migrate(
   }
 
   // step 5
-  const upgradeCommand = getTurboUpgradeCommand({
-    directory: selectedDirectory,
+
+  // shutdown the turbo daemon
+  if (!options.dry) {
+    shutdownDaemon({ project });
+  }
+
+  // find the upgrade command, and run it
+  const upgradeCommand = await getTurboUpgradeCommand({
+    project,
     to: options.to,
   });
 
@@ -195,6 +219,7 @@ export default async function migrate(
     });
   }
 
+  // install
   if (options.install) {
     if (options.dry) {
       console.log(
@@ -205,7 +230,19 @@ export default async function migrate(
       );
     } else {
       console.log(`Upgrading turbo with ${chalk.bold(upgradeCommand)}`, os.EOL);
-      execSync(upgradeCommand, { cwd: selectedDirectory });
+      try {
+        execSync(upgradeCommand, { stdio: "pipe", cwd: project.paths.root });
+      } catch (err) {
+        let message = "UNKNOWN_ERROR";
+        if (err instanceof Error && "stderr" in err && err.stderr) {
+          message = err.stderr.toString();
+        }
+
+        return endMigration({
+          success: false,
+          message: `Unable to upgrade turbo: ${message}`,
+        });
+      }
     }
   } else {
     console.log(`Upgrade turbo with ${chalk.bold(upgradeCommand)}`, os.EOL);
