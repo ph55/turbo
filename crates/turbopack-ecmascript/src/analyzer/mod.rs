@@ -22,7 +22,7 @@ use swc_core::{
         atoms::{Atom, JsWord},
     },
 };
-use turbo_tasks::{ValueFrom, Vc};
+use turbo_tasks::Vc;
 use turbopack_core::compile_time_info::CompileTimeDefineValue;
 use url::Url;
 
@@ -3009,12 +3009,6 @@ impl RequireContextValue {
         }
 
         Ok(Vc::cell(context_map))
-    }
-}
-
-impl ValueFrom<RequireContextMap> for RequireContextValue {
-    fn value_from(map: Vc<RequireContextMap>) -> Vc<Self> {
-        Self::from_context_map(map)
     }
 }
 

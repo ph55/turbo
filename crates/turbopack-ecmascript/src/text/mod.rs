@@ -1,5 +1,5 @@
 use anyhow::Result;
-use turbo_tasks::{ValueInto, Vc};
+use turbo_tasks::Vc;
 use turbo_tasks_fs::FileContent;
 use turbopack_core::{
     asset::{Asset, AssetContent},
@@ -39,11 +39,11 @@ impl Asset for TextContentSourceAsset {
     async fn content(&self) -> Result<Vc<AssetContent>> {
         let source = self.source.content().file_content();
         let FileContent::Content(content) = &*source.await? else {
-            return Ok(FileContent::NotFound.cell().value_into());
+            return Ok(AssetContent::file(FileContent::NotFound.cell()));
         };
         let text = content.content().to_str()?;
         let code = format!("export default {};", StringifyJs(&text));
         let content = FileContent::Content(code.into()).cell();
-        Ok(content.value_into())
+        Ok(AssetContent::file(content))
     }
 }
