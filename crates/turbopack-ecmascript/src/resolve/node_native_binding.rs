@@ -126,17 +126,14 @@ pub async fn resolve_node_pre_gyp_files(
                             "unknown"
                         },
                     );
-                    let resolved_file_vc = config_file_dir.join(
-                        format!(
-                            "{}/{}.node",
-                            native_binding_path, node_pre_gyp_config.binary.module_name
-                        )
-                        .as_str(),
-                    );
+                    let resolved_file_vc = config_file_dir.join(format!(
+                        "{}/{}.node",
+                        native_binding_path, node_pre_gyp_config.binary.module_name
+                    ));
                     for (_, entry) in config_file_dir
-                        .join(native_binding_path.as_ref())
+                        .join(native_binding_path.to_string())
                         .read_glob(
-                            Glob::new(format!("*.{}", compile_target.dylib_ext()).as_str()),
+                            Glob::new(format!("*.{}", compile_target.dylib_ext())),
                             false,
                         )
                         .await?
@@ -156,8 +153,8 @@ pub async fn resolve_node_pre_gyp_files(
                     .parent()
                     // TODO
                     // read the dependencies path from `bindings.gyp`
-                    .join("deps/lib")
-                    .read_glob(Glob::new("*".to_string().as_str()), false)
+                    .join("deps/lib".to_string())
+                    .read_glob(Glob::new("*".to_string()), false)
                     .await?
                     .results
                     .values()

@@ -1,9 +1,8 @@
-use turbo_tasks::{ValueToString, Vc};
 pub mod resolve;
 
 use anyhow::Result;
 use serde_json::Value as JsonValue;
-use turbo_tasks::{Value, Vc};
+use turbo_tasks::{Value, ValueToString, Vc};
 use turbo_tasks_fs::DirectoryContent;
 use turbopack_core::{
     asset::{Asset, AssetContent},

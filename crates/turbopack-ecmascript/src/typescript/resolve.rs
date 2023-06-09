@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Write};
 
 use anyhow::Result;
 use serde_json::Value as JsonValue;
-use turbo_tasks::{Value, ValueToString, Vc};
+use turbo_tasks::{Value, ValueDefault, ValueToString, Vc};
 use turbo_tasks_fs::{FileContent, FileJsonContent, FileSystemPath};
 use turbopack_core::{
     asset::{Asset, AssetOption},
@@ -197,9 +197,11 @@ pub struct TsConfigResolveOptions {
     import_map: Option<Vc<ImportMap>>,
 }
 
-impl Default for TsConfigResolveOptions {
+#[turbo_tasks::value_impl]
+impl ValueDefault for TsConfigResolveOptions {
+    #[turbo_tasks::function]
     fn default() -> Vc<Self> {
-        Vc::<Self>::cell(Default::default())
+        Self::default().cell()
     }
 }
 
