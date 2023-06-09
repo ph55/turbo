@@ -216,7 +216,7 @@ pub struct EcmascriptChunkComparison {
 impl Chunk for EcmascriptChunk {
     #[turbo_tasks::function]
     fn chunking_context(&self) -> Vc<Box<dyn ChunkingContext>> {
-        self.context.into()
+        Vc::upcast(self.context)
     }
 
     #[turbo_tasks::function]

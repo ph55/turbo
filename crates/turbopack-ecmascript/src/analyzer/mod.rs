@@ -3013,7 +3013,7 @@ impl RequireContextValue {
 }
 
 impl ValueFrom<RequireContextMap> for RequireContextValue {
-    fn from(map: Vc<RequireContextMap>) -> Vc<Self> {
+    fn value_from(map: Vc<RequireContextMap>) -> Vc<Self> {
         Self::from_context_map(map)
     }
 }

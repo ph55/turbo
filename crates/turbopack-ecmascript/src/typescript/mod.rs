@@ -10,7 +10,12 @@ use turbopack_core::{
     issue::{IssueSeverity, OptionIssueSource},
     reference::{AssetReference, AssetReferences},
     reference_type::{CommonJsReferenceSubType, ReferenceType},
-    resolve::{origin::ResolveOrigin, parse::Request, pattern::QueryMap, ResolveResult},
+    resolve::{
+        origin::{ResolveOrigin, ResolveOriginExt},
+        parse::Request,
+        pattern::QueryMap,
+        ResolveResult,
+    },
 };
 
 use self::resolve::{read_from_tsconfigs, read_tsconfigs, type_resolve};
@@ -113,8 +118,10 @@ impl Asset for TsConfigModuleAsset {
                 let mut all_types = Vec::new();
                 let mut current = self.source.ident().path().parent().resolve().await?;
                 loop {
-                    if let DirectoryContent::Entries(entries) =
-                        &*current.join("node_modules/@types").read_dir().await?
+                    if let DirectoryContent::Entries(entries) = &*current
+                        .join("node_modules/@types".to_string())
+                        .read_dir()
+                        .await?
                     {
                         all_types.extend(entries.iter().filter_map(|(name, _)| {
                             if name.starts_with('.') {

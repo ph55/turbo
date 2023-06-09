@@ -175,7 +175,9 @@ pub async fn resolve_node_pre_gyp_files(
                 }
                 return Ok(ResolveResult::assets_with_references(
                     assets.into_iter().collect(),
-                    vec![AffectingResolvingAssetReference::new(config_file_path).into()],
+                    vec![Vc::upcast(AffectingResolvingAssetReference::new(
+                        config_file_path,
+                    ))],
                 )
                 .into());
             }
@@ -245,7 +247,7 @@ pub async fn resolve_node_gyp_build_files(
                         IndexSet::with_capacity(captured.len());
                     for found in captured.iter().skip(1).flatten() {
                         let name = found.as_str();
-                        let target_path = context.join("build").join("Release");
+                        let target_path = context.join("build/Release".to_string());
                         let resolved_prebuilt_file = resolve_raw(
                             target_path,
                             Pattern::new(Pattern::Constant(format!("{}.node", name))),
@@ -362,18 +364,17 @@ pub async fn resolve_node_bindings_files(
         .iter()
         .map(|try_dir| {
             Vc::upcast(SourceAsset::new(
-                root_context.join(&format!("{}/{}", try_dir, &file_name)),
+                root_context.join(format!("{}/{}", try_dir, &file_name)),
             ))
         })
         .collect();
 
     Ok(ResolveResult::assets_with_references(
         bindings_try,
-        vec![SourceAssetReference::new(
-            SourceAsset::new(root_context).into(),
+        vec![Vc::upcast(SourceAssetReference::new(
+            Vc::upcast(SourceAsset::new(root_context)),
             Pattern::Concatenation(vec![Pattern::Dynamic, Pattern::Constant(file_name)]).into(),
-        )
-        .into()],
+        ))],
     )
     .into())
 }

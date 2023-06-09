@@ -8,7 +8,7 @@ use turbopack_core::{
     asset::{Asset, AssetOption},
     context::AssetContext,
     ident::AssetIdent,
-    issue::{Issue, IssueSeverity, OptionIssueSource},
+    issue::{Issue, IssueExt, IssueSeverity, OptionIssueSource},
     reference::AssetReference,
     reference_type::{ReferenceType, TypeScriptReferenceSubType},
     resolve::{
@@ -18,14 +18,13 @@ use turbopack_core::{
             ConditionValue, ImportMap, ImportMapping, ResolveInPackage, ResolveIntoPackage,
             ResolveModules, ResolveOptions,
         },
-        origin::ResolveOrigin,
+        origin::{ResolveOrigin, ResolveOriginExt},
         parse::Request,
         pattern::{Pattern, QueryMap},
         resolve, AliasPattern, ResolveResult,
     },
     source_asset::SourceAsset,
 };
-
 #[turbo_tasks::value(shared)]
 pub struct TsConfigIssue {
     pub severity: Vc<IssueSeverity>,
@@ -58,25 +57,21 @@ pub async fn read_tsconfigs(
                 } else {
                     write!(message, "{}", e)?;
                 }
-                Vc::upcast(
-                    TsConfigIssue {
-                        severity: IssueSeverity::Error.into(),
-                        source_ident: tsconfig.ident(),
-                        message: Vc::cell(message),
-                    }
-                    .cell(),
-                )
+                TsConfigIssue {
+                    severity: IssueSeverity::Error.into(),
+                    source_ident: tsconfig.ident(),
+                    message: Vc::cell(message),
+                }
+                .cell()
                 .emit();
             }
             FileJsonContent::NotFound => {
-                Vc::upcast(
-                    TsConfigIssue {
-                        severity: IssueSeverity::Error.into(),
-                        source_ident: tsconfig.ident(),
-                        message: Vc::cell("tsconfig not found".into()),
-                    }
-                    .cell(),
-                )
+                TsConfigIssue {
+                    severity: IssueSeverity::Error.into(),
+                    source_ident: tsconfig.ident(),
+                    message: Vc::cell("tsconfig not found".into()),
+                }
+                .cell()
                 .emit();
             }
             FileJsonContent::Content(json) => {
@@ -88,14 +83,12 @@ pub async fn read_tsconfigs(
                         tsconfig = *asset;
                         continue;
                     } else {
-                        Vc::upcast(
-                            TsConfigIssue {
-                                severity: IssueSeverity::Error.into(),
-                                source_ident: tsconfig.ident(),
-                                message: Vc::cell("extends doesn't resolve correctly".to_string()),
-                            }
-                            .cell(),
-                        )
+                        TsConfigIssue {
+                            severity: IssueSeverity::Error.into(),
+                            source_ident: tsconfig.ident(),
+                            message: Vc::cell("extends doesn't resolve correctly".to_string()),
+                        }
+                        .cell()
                         .emit();
                     }
                 }
@@ -200,7 +193,7 @@ pub struct TsConfigResolveOptions {
 #[turbo_tasks::value_impl]
 impl ValueDefault for TsConfigResolveOptions {
     #[turbo_tasks::function]
-    fn default() -> Vc<Self> {
+    fn value_default() -> Vc<Self> {
         Self::default().cell()
     }
 }
@@ -222,9 +215,13 @@ pub async fn tsconfig_resolve_options(
     }
 
     let base_url = if let Some(base_url) = read_from_tsconfigs(&configs, |json, source| {
-        json["compilerOptions"]["baseUrl"]
-            .as_str()
-            .map(|base_url| source.ident().path().parent().try_join(base_url))
+        json["compilerOptions"]["baseUrl"].as_str().map(|base_url| {
+            source
+                .ident()
+                .path()
+                .parent()
+                .try_join(base_url.to_string())
+        })
     })
     .await?
     {
@@ -239,7 +236,7 @@ pub async fn tsconfig_resolve_options(
             if let JsonValue::Object(paths) = &json["compilerOptions"]["paths"] {
                 let mut context = source.ident().path().parent();
                 if let Some(base_url) = json["compilerOptions"]["baseUrl"].as_str() {
-                    if let Some(new_context) = *context.try_join(base_url).await? {
+                    if let Some(new_context) = *context.try_join(base_url.to_string()).await? {
                         context = new_context;
                     }
                 };
@@ -265,7 +262,6 @@ pub async fn tsconfig_resolve_options(
                             )),
                         }
                         .cell()
-                        .as_issue()
                         .emit()
                     }
                 }

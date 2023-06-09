@@ -172,7 +172,7 @@ impl EcmascriptModuleAssetBuilder {
         if let Some(part) = self.part {
             Vc::upcast(EcmascriptModulePartAsset::new(base, part))
         } else {
-            base.into()
+            Vc::upcast(base)
         }
     }
 }
@@ -269,7 +269,7 @@ impl EcmascriptModuleAsset {
     ) -> Vc<Box<dyn Chunk>> {
         Vc::upcast(EcmascriptChunk::new_root_with_entries(
             context,
-            self.into(),
+            Vc::upcast(self),
             other_entries,
         ))
     }

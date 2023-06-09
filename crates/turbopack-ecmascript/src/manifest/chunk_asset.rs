@@ -122,7 +122,7 @@ impl ChunkableAsset for ManifestChunkAsset {
     ) -> Vc<Box<dyn Chunk>> {
         Vc::upcast(EcmascriptChunk::new(
             context,
-            self.into(),
+            Vc::upcast(self),
             availability_info,
         ))
     }

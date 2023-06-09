@@ -2,7 +2,7 @@ use std::io::Write;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use turbo_tasks::{trace::TraceRawVcs, Value, ValueToString, Vc};
+use turbo_tasks::{trace::TraceRawVcs, Upcast, Value, ValueToString, Vc};
 use turbo_tasks_fs::rope::Rope;
 use turbopack_core::{
     asset::Asset,
@@ -155,16 +155,17 @@ pub trait EcmascriptChunkItemExt {
 
 impl<T> EcmascriptChunkItemExt for T
 where
-    T: EcmascriptChunkItem,
+    T: Upcast<Box<dyn EcmascriptChunkItem>>,
 {
     /// Returns the module id of this chunk item.
     fn id(self: Vc<Self>) -> Vc<ModuleId> {
-        self.chunking_context().chunk_item_id(self)
+        let chunk_item = Vc::upcast(self);
+        chunk_item.chunking_context().chunk_item_id(chunk_item)
     }
 
     /// Generates the module factory for this chunk item.
     fn code(self: Vc<Self>, availability_info: Value<AvailabilityInfo>) -> Vc<Code> {
-        module_factory_with_code_generation_issue(self, availability_info)
+        module_factory_with_code_generation_issue(Vc::upcast(self), availability_info)
     }
 }
 

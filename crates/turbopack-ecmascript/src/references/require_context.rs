@@ -224,7 +224,7 @@ impl RequireContextAssetReference {
     ) -> Vc<Self> {
         let map = RequireContextMap::generate(
             origin,
-            origin.origin_path().parent().join(&dir),
+            origin.origin_path().parent().join(dir.clone()),
             include_subdirs,
             filter,
             issue_source,
@@ -255,7 +255,7 @@ impl RequireContextAssetReference {
 impl AssetReference for RequireContextAssetReference {
     #[turbo_tasks::function]
     fn resolve_reference(&self) -> Vc<ResolveResult> {
-        ResolveResult::asset(self.inner.into()).cell()
+        ResolveResult::asset(Vc::upcast(self.inner)).cell()
     }
 }
 
